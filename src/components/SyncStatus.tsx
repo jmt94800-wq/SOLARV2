@@ -37,24 +37,34 @@ export default function SyncStatus() {
   const syncData = async () => {
     setIsSyncing(true);
     try {
-      // Simulate network delay for sync
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const clients = await db.clients.filter(c => c.sync_status === 'pending').toArray();
+      const visits = await db.visits.filter(v => v.sync_status === 'pending').toArray();
+      const visitNeeds = await db.visitNeeds.filter(n => n.sync_status === 'pending').toArray();
+      const catalog = await db.catalog.filter(c => c.sync_status === 'pending').toArray();
+      const photos = await db.photos.filter(p => p.sync_status === 'pending').toArray();
 
-      await db.transaction('rw', db.clients, db.visits, db.visitNeeds, db.catalog, async () => {
-        const clients = await db.clients.filter(c => c.sync_status === 'pending').toArray();
+      const payload = { clients, visits, visitNeeds, catalog, photos };
+
+      const response = await fetch('/api/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        throw new Error('Sync failed on server');
+      }
+
+      await db.transaction('rw', [db.clients, db.visits, db.visitNeeds, db.catalog, db.photos], async () => {
         for (const c of clients) await db.clients.update(c.id, { sync_status: 'synced' });
-
-        const visits = await db.visits.filter(v => v.sync_status === 'pending').toArray();
         for (const v of visits) await db.visits.update(v.id, { sync_status: 'synced' });
-
-        const needs = await db.visitNeeds.filter(n => n.sync_status === 'pending').toArray();
-        for (const n of needs) await db.visitNeeds.update(n.id, { sync_status: 'synced' });
-
-        const catalog = await db.catalog.filter(c => c.sync_status === 'pending').toArray();
+        for (const n of visitNeeds) await db.visitNeeds.update(n.id, { sync_status: 'synced' });
         for (const c of catalog) await db.catalog.update(c.id, { sync_status: 'synced' });
+        for (const p of photos) await db.photos.update(p.id, { sync_status: 'synced' });
       });
     } catch (error) {
       console.error('Sync failed:', error);
+      alert('Erreur lors de la synchronisation. Vérifiez votre connexion.');
     } finally {
       setIsSyncing(false);
     }

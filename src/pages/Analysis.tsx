@@ -33,8 +33,11 @@ export default function Analysis() {
                qty: need.quantity,
                isBattery: false
            });
-           totalHourly += (need.hourly_power_kwh * need.quantity);
-           totalPmax += (need.pmax_w * need.quantity);
+           
+           if (need.include_in_peak) {
+               totalHourly += (need.hourly_power_kwh * need.quantity);
+               totalPmax += (need.pmax_w * need.quantity);
+           }
        }
 
        // Génération dynamique de la ligne Batterie

@@ -1,11 +1,11 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAppContext } from '../store';
-import { Sun, Users, ClipboardList, Database, BarChart3, Menu, X } from 'lucide-react';
+import { Sun, Users, ClipboardList, Database, BarChart3, Menu, X, LogOut } from 'lucide-react';
 import { useState } from 'react';
 import SyncStatus from './SyncStatus';
 
 export default function Layout() {
-  const { role, setRole } = useAppContext();
+  const { role, setRole, agentName, setAgentName } = useAppContext();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -16,6 +16,11 @@ export default function Layout() {
     { path: '/catalog', label: 'Catalogue', icon: Database, roles: ['MANAGER'] },
     { path: '/analysis', label: 'Analyse', icon: BarChart3, roles: ['MANAGER'] },
   ];
+
+  const handleLogout = () => {
+    localStorage.removeItem('agentName');
+    setAgentName('');
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -30,6 +35,17 @@ export default function Layout() {
           <div className="flex items-center gap-4">
             <SyncStatus />
             
+            <div className="hidden sm:flex items-center gap-2 text-sm bg-emerald-700/50 px-3 py-1.5 rounded-full">
+              <span className="font-medium">{agentName}</span>
+              <button 
+                onClick={handleLogout}
+                className="text-emerald-200 hover:text-white transition-colors"
+                title="Changer d'utilisateur"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as 'AGENT' | 'MANAGER')}
@@ -69,8 +85,8 @@ export default function Layout() {
         {/* Mobile Menu */}
         {isMenuOpen && (
           <div className="md:hidden fixed inset-0 z-20 bg-black/50" onClick={() => setIsMenuOpen(false)}>
-            <div className="bg-white w-64 h-full py-6" onClick={e => e.stopPropagation()}>
-              <nav className="space-y-1 px-3">
+            <div className="bg-white w-64 h-full py-6 flex flex-col" onClick={e => e.stopPropagation()}>
+              <nav className="space-y-1 px-3 flex-1">
                 {navItems.filter(item => item.roles.includes(role)).map((item) => {
                   const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
                   return (
@@ -86,6 +102,18 @@ export default function Layout() {
                   )
                 })}
               </nav>
+              
+              <div className="px-6 py-4 border-t border-slate-200 mt-auto">
+                <div className="text-sm text-slate-500 mb-2">Connecté en tant que</div>
+                <div className="font-medium text-slate-900 mb-4">{agentName}</div>
+                <button 
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 text-red-600 hover:text-red-700 font-medium text-sm"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Changer d'utilisateur
+                </button>
+              </div>
             </div>
           </div>
         )}

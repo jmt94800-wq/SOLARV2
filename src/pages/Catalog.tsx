@@ -67,7 +67,7 @@ export default function Catalog() {
               is_peak_power: Boolean(item.is_peak_power),
               comment: item.comment || '',
               is_active: true,
-              sync_status: 'pending'
+              sync_status: 'pending' as const
             }));
             await db.catalog.bulkAdd(newItems);
           });
