@@ -15,6 +15,7 @@ export default function Visits() {
   const [isAdding, setIsAdding] = useState(false);
   const [clientId, setClientId] = useState('');
   const [address, setAddress] = useState('');
+  const [visitDate, setVisitDate] = useState(format(new Date(), "yyyy-MM-dd'T'HH:mm"));
   const [autonomy, setAutonomy] = useState(0);
   const [comment, setComment] = useState('');
 
@@ -24,13 +25,14 @@ export default function Visits() {
     
     const client = clients?.find(c => c.id === clientId);
     const visitAddress = address || client?.main_address || '';
+    const dateTimestamp = new Date(visitDate).getTime();
 
     await db.visits.add({
       id: uuidv4(),
       client_id: clientId,
       agent_id: agentId,
       visit_address: visitAddress,
-      visit_date: Date.now(),
+      visit_date: dateTimestamp,
       report: '',
       comment: comment,
       autonomy_days: autonomy,
@@ -41,6 +43,7 @@ export default function Visits() {
     
     setClientId('');
     setAddress('');
+    setVisitDate(format(new Date(), "yyyy-MM-dd'T'HH:mm"));
     setAutonomy(0);
     setComment('');
     setIsAdding(false);
@@ -63,6 +66,16 @@ export default function Visits() {
               <option value="">Sélectionner un client...</option>
               {clients?.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Date et heure prévues</label>
+            <input 
+              type="datetime-local" 
+              value={visitDate} 
+              onChange={e => setVisitDate(e.target.value)} 
+              className="w-full border border-slate-300 rounded-lg px-3 py-2" 
+              required 
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Adresse de la visite (laisser vide si adresse principale)</label>
